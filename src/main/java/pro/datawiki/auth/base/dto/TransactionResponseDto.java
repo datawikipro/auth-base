@@ -15,7 +15,7 @@ import lombok.*;
 public class TransactionResponseDto {
 
     @JsonProperty("id")
-    private Long id;
+    private Integer id;
 
     @JsonProperty("user_id")
     private Long userId;
