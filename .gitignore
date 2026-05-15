@@ -1,0 +1,17 @@
+target/
+.mvn/
+*.class
+*.jar
+*.war
+*.ear
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
