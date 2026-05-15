@@ -6,13 +6,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pro.datawiki.auth.base.domain.Role;
 import pro.datawiki.auth.base.dto.*;
-import pro.datawiki.auth.base.repository.*;
+import pro.datawiki.auth.base.repository.RoleRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Role CRUD service.
+ * Permission management (table/schema/column) lives in table-manager-auth-microservice.
  */
 @Slf4j
 @Service
@@ -20,9 +21,6 @@ import java.util.Optional;
 public class RoleService {
 
     private final RoleRepository roleRepository;
-    private final TablePermissionRepository tablePermissionRepository;
-    private final SchemaPermissionRepository schemaPermissionRepository;
-    private final ColumnPermissionRepository columnPermissionRepository;
 
     @Transactional(readOnly = true)
     public List<RoleDto> getAllRoles() {
