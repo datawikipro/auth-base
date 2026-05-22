@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * User data transfer object for admin list/detail responses.
@@ -39,4 +40,40 @@ public class UserDto {
 
     @JsonProperty("roles")
     private List<String> roles;
+
+    @JsonProperty("balance")
+    private BigDecimal balance;
+
+    @JsonProperty("balanceCurrency")
+    private String balanceCurrency;
+
+    @JsonProperty("region")
+    private String region;
+
+    @JsonProperty("virtualWalletEnabled")
+    private boolean virtualWalletEnabled;
+
+    @JsonProperty("preselectedBookmakers")
+    private String preselectedBookmakers;
+
+    @JsonProperty("sportFilters")
+    private String sportFilters;
+
+    @JsonProperty("coefficientTypes")
+    private String coefficientTypes;
+
+    @JsonProperty("customSubscriptionEnabled")
+    private boolean customSubscriptionEnabled;
+
+    @JsonProperty("customSubscriptionMinProfit")
+    private BigDecimal customSubscriptionMinProfit;
+
+    @JsonProperty("customSubscriptionSports")
+    private String customSubscriptionSports;
+
+    @JsonProperty("customSubscriptionOutcomes")
+    private String customSubscriptionOutcomes;
+
+    @JsonProperty("customSubscriptionBookmakers")
+    private String customSubscriptionBookmakers;
 }

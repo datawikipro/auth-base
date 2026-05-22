@@ -69,6 +69,18 @@ public class AuthService {
                 .hasFullAccess(hasFullAccess)
                 .isActive(user.isActive())
                 .authProvider("email")
+                .balance(user.getBalance())
+                .balanceCurrency(user.getBalanceCurrency())
+                .region(user.getRegion())
+                .virtualWalletEnabled(user.isVirtualWalletEnabled())
+                .preselectedBookmakers(user.getPreselectedBookmakers())
+                .sportFilters(user.getSportFilters())
+                .coefficientTypes(user.getCoefficientTypes())
+                .customSubscriptionEnabled(user.isCustomSubscriptionEnabled())
+                .customSubscriptionMinProfit(user.getCustomSubscriptionMinProfit())
+                .customSubscriptionSports(user.getCustomSubscriptionSports())
+                .customSubscriptionOutcomes(user.getCustomSubscriptionOutcomes())
+                .customSubscriptionBookmakers(user.getCustomSubscriptionBookmakers())
                 .build();
     }
 

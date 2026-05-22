@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
 
 /**
  * Full user session returned after successful authentication.
@@ -58,4 +59,40 @@ public class SessionUserDto {
 
     @JsonProperty("externalId")
     private String externalId;
+
+    @JsonProperty("balance")
+    private BigDecimal balance;
+
+    @JsonProperty("balanceCurrency")
+    private String balanceCurrency;
+
+    @JsonProperty("region")
+    private String region;
+
+    @JsonProperty("virtualWalletEnabled")
+    private boolean virtualWalletEnabled;
+
+    @JsonProperty("preselectedBookmakers")
+    private String preselectedBookmakers;
+
+    @JsonProperty("sportFilters")
+    private String sportFilters;
+
+    @JsonProperty("coefficientTypes")
+    private String coefficientTypes;
+
+    @JsonProperty("customSubscriptionEnabled")
+    private boolean customSubscriptionEnabled;
+
+    @JsonProperty("customSubscriptionMinProfit")
+    private BigDecimal customSubscriptionMinProfit;
+
+    @JsonProperty("customSubscriptionSports")
+    private String customSubscriptionSports;
+
+    @JsonProperty("customSubscriptionOutcomes")
+    private String customSubscriptionOutcomes;
+
+    @JsonProperty("customSubscriptionBookmakers")
+    private String customSubscriptionBookmakers;
 }

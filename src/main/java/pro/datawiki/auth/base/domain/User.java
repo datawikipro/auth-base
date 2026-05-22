@@ -44,6 +44,36 @@ public class User {
     @Column(name = "balance_currency", length = 3)
     private String balanceCurrency = "RUB";
 
+    @Column(name = "region", length = 50)
+    private String region = "RU";
+
+    @Column(name = "virtual_wallet_enabled")
+    private boolean virtualWalletEnabled = true;
+
+    @Column(name = "preselected_bookmakers", columnDefinition = "TEXT")
+    private String preselectedBookmakers;
+
+    @Column(name = "sport_filters", columnDefinition = "TEXT")
+    private String sportFilters;
+
+    @Column(name = "coefficient_types", columnDefinition = "TEXT")
+    private String coefficientTypes;
+
+    @Column(name = "custom_subscription_enabled")
+    private boolean customSubscriptionEnabled = false;
+
+    @Column(name = "custom_subscription_min_profit", precision = 5, scale = 2)
+    private BigDecimal customSubscriptionMinProfit = BigDecimal.ZERO;
+
+    @Column(name = "custom_subscription_sports", columnDefinition = "TEXT")
+    private String customSubscriptionSports;
+
+    @Column(name = "custom_subscription_outcomes", columnDefinition = "TEXT")
+    private String customSubscriptionOutcomes;
+
+    @Column(name = "custom_subscription_bookmakers", columnDefinition = "TEXT")
+    private String customSubscriptionBookmakers;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -72,6 +72,18 @@ public class UserService {
             if (req.getFullName() != null) user.setFullName(req.getFullName());
             if (req.getIsActive() != null) user.setActive(req.getIsActive());
             if (req.getPassword() != null) user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+            if (req.getBalance() != null) user.setBalance(req.getBalance());
+            if (req.getBalanceCurrency() != null) user.setBalanceCurrency(req.getBalanceCurrency());
+            if (req.getRegion() != null) user.setRegion(req.getRegion());
+            if (req.getVirtualWalletEnabled() != null) user.setVirtualWalletEnabled(req.getVirtualWalletEnabled());
+            if (req.getPreselectedBookmakers() != null) user.setPreselectedBookmakers(req.getPreselectedBookmakers());
+            if (req.getSportFilters() != null) user.setSportFilters(req.getSportFilters());
+            if (req.getCoefficientTypes() != null) user.setCoefficientTypes(req.getCoefficientTypes());
+            if (req.getCustomSubscriptionEnabled() != null) user.setCustomSubscriptionEnabled(req.getCustomSubscriptionEnabled());
+            if (req.getCustomSubscriptionMinProfit() != null) user.setCustomSubscriptionMinProfit(req.getCustomSubscriptionMinProfit());
+            if (req.getCustomSubscriptionSports() != null) user.setCustomSubscriptionSports(req.getCustomSubscriptionSports());
+            if (req.getCustomSubscriptionOutcomes() != null) user.setCustomSubscriptionOutcomes(req.getCustomSubscriptionOutcomes());
+            if (req.getCustomSubscriptionBookmakers() != null) user.setCustomSubscriptionBookmakers(req.getCustomSubscriptionBookmakers());
             return userRepository.save(user);
         });
     }
@@ -120,6 +132,18 @@ public class UserService {
                 .createdAt(u.getCreatedAt() != null ? u.getCreatedAt().toString() : null)
                 .updatedAt(u.getUpdatedAt() != null ? u.getUpdatedAt().toString() : null)
                 .roles(u.getRoleNames())
+                .balance(u.getBalance())
+                .balanceCurrency(u.getBalanceCurrency())
+                .region(u.getRegion())
+                .virtualWalletEnabled(u.isVirtualWalletEnabled())
+                .preselectedBookmakers(u.getPreselectedBookmakers())
+                .sportFilters(u.getSportFilters())
+                .coefficientTypes(u.getCoefficientTypes())
+                .customSubscriptionEnabled(u.isCustomSubscriptionEnabled())
+                .customSubscriptionMinProfit(u.getCustomSubscriptionMinProfit())
+                .customSubscriptionSports(u.getCustomSubscriptionSports())
+                .customSubscriptionOutcomes(u.getCustomSubscriptionOutcomes())
+                .customSubscriptionBookmakers(u.getCustomSubscriptionBookmakers())
                 .build();
     }
 }

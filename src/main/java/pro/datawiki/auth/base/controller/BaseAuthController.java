@@ -15,6 +15,7 @@ import pro.datawiki.auth.base.repository.UserRepository;
 import pro.datawiki.auth.base.security.JwtTokenProvider;
 import pro.datawiki.auth.base.service.AuthService;
 import pro.datawiki.auth.base.service.UserService;
+import pro.datawiki.auth.base.service.SubscriptionService;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -37,6 +38,7 @@ public class BaseAuthController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final SubscriptionService subscriptionService;
 
     @Value("${telegram.bot-token:}")
     private String botToken;
@@ -91,6 +93,35 @@ public class BaseAuthController {
             SessionUserDto session = authService.buildSession(user);
             return SessionResponseDto.builder().success(true).user(session).build();
         }).orElse(SessionResponseDto.builder().success(false).build());
+    }
+
+    @PutMapping("/update-profile")
+    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody UpdateUserRequestDto req) {
+        String username = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username).map(user -> {
+            // Standard users should NOT be allowed to update their active status, balance or roles!
+            req.setIsActive(null);
+            req.setBalance(null);
+            req.setBalanceCurrency(null);
+            req.setRoleIds(null);
+
+            // Allow update of custom subscription fields ONLY if they are PRO (have premium_surebets feature)!
+            boolean hasPro = subscriptionService.hasAccess(user.getId(), "premium_surebets");
+            if (!hasPro) {
+                req.setCustomSubscriptionEnabled(null);
+                req.setCustomSubscriptionMinProfit(null);
+                req.setCustomSubscriptionSports(null);
+                req.setCustomSubscriptionOutcomes(null);
+                req.setCustomSubscriptionBookmakers(null);
+            }
+
+            userService.updateUser(user.getId(), req);
+            return ResponseEntity.ok(Map.<String, Object>of(
+                    "success", true,
+                    "message", "Profile updated successfully"
+            ));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/verify-token")

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * Request body for updating an existing user (admin).
@@ -29,4 +30,40 @@ public class UpdateUserRequestDto {
 
     @JsonProperty("roleIds")
     private List<Long> roleIds;
+
+    @JsonProperty("balance")
+    private BigDecimal balance;
+
+    @JsonProperty("balanceCurrency")
+    private String balanceCurrency;
+
+    @JsonProperty("region")
+    private String region;
+
+    @JsonProperty("virtualWalletEnabled")
+    private Boolean virtualWalletEnabled;
+
+    @JsonProperty("preselectedBookmakers")
+    private String preselectedBookmakers;
+
+    @JsonProperty("sportFilters")
+    private String sportFilters;
+
+    @JsonProperty("coefficientTypes")
+    private String coefficientTypes;
+
+    @JsonProperty("customSubscriptionEnabled")
+    private Boolean customSubscriptionEnabled;
+
+    @JsonProperty("customSubscriptionMinProfit")
+    private BigDecimal customSubscriptionMinProfit;
+
+    @JsonProperty("customSubscriptionSports")
+    private String customSubscriptionSports;
+
+    @JsonProperty("customSubscriptionOutcomes")
+    private String customSubscriptionOutcomes;
+
+    @JsonProperty("customSubscriptionBookmakers")
+    private String customSubscriptionBookmakers;
 }
