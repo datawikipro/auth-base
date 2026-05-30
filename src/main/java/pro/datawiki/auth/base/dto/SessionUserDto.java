@@ -60,6 +60,9 @@ public class SessionUserDto {
     @JsonProperty("externalId")
     private String externalId;
 
+    @JsonProperty("telegramId")
+    private Long telegramId;
+
     @JsonProperty("balance")
     private BigDecimal balance;
 

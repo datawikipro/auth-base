@@ -69,6 +69,7 @@ public class AuthService {
                 .hasFullAccess(hasFullAccess)
                 .isActive(user.isActive())
                 .authProvider("email")
+                .telegramId(user.getTelegramId())
                 .balance(user.getBalance())
                 .balanceCurrency(user.getBalanceCurrency())
                 .region(user.getRegion())
