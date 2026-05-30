@@ -236,11 +236,15 @@ public class BaseAuthController {
                     .map(e -> e.getKey() + "=" + e.getValue())
                     .collect(Collectors.joining("\n"));
 
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(
-                    MessageDigest.getInstance("SHA-256").digest("WebAppData".getBytes(StandardCharsets.UTF_8)),
-                    "HmacSHA256"));
-            byte[] hash = mac.doFinal(dataCheckString.getBytes(StandardCharsets.UTF_8));
+            // Calculate secret key: HMAC-SHA256 of botToken with key "WebAppData"
+            Mac secretKeyMac = Mac.getInstance("HmacSHA256");
+            secretKeyMac.init(new SecretKeySpec("WebAppData".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] secretKey = secretKeyMac.doFinal(botToken.getBytes(StandardCharsets.UTF_8));
+
+            // Calculate hash: HMAC-SHA256 of dataCheckString with key secretKey
+            Mac hashMac = Mac.getInstance("HmacSHA256");
+            hashMac.init(new SecretKeySpec(secretKey, "HmacSHA256"));
+            byte[] hash = hashMac.doFinal(dataCheckString.getBytes(StandardCharsets.UTF_8));
             String calculated = HexFormat.of().formatHex(hash);
 
             if (!MessageDigest.isEqual(calculated.getBytes(), receivedHash.getBytes())) {
