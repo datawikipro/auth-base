@@ -19,6 +19,7 @@ import pro.datawiki.auth.base.service.SubscriptionService;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -193,18 +194,30 @@ public class BaseAuthController {
             String lastName = req.getLastName() != null ? req.getLastName() : "User";
             String fullName = (firstName + " " + lastName).trim();
 
-            if (!userRepository.existsByUsername(tgUsername)) {
-                Role guestRole = userService.findOrCreateRole("GUEST", "Guest user", true, false);
-                User user = userService.createUser(tgUsername, tgPassword, tgEmail, fullName);
-                userService.assignRoles(user.getId(), List.of(guestRole.getId()));
-                log.info("Created Telegram user: {}", tgUsername);
+            Optional<User> linkedUserOpt = userRepository.findByTelegramId(telegramId);
+            User user;
+            if (linkedUserOpt.isPresent()) {
+                user = linkedUserOpt.get();
+                log.info("Telegram ID {} is linked to website user: {}", telegramId, user.getUsername());
+            } else {
+                Optional<User> tgUserOpt = userRepository.findByUsername(tgUsername);
+                if (tgUserOpt.isEmpty()) {
+                    Role guestRole = userService.findOrCreateRole("GUEST", "Guest user", true, false);
+                    user = userService.createUser(tgUsername, tgPassword, tgEmail, fullName);
+                    user.setTelegramId(telegramId);
+                    userRepository.save(user);
+                    userService.assignRoles(user.getId(), List.of(guestRole.getId()));
+                    log.info("Created Telegram user: {}", tgUsername);
+                } else {
+                    user = tgUserOpt.get();
+                    if (user.getTelegramId() == null) {
+                        user.setTelegramId(telegramId);
+                        userRepository.save(user);
+                    }
+                }
             }
 
-            SessionUserDto session = authService.authenticate(tgUsername, tgPassword);
-            if (session == null) {
-                return LoginResponseDto.builder().success(false).error("Authentication failed after creation").build();
-            }
-
+            SessionUserDto session = authService.buildSession(user);
             String token = authService.createTelegramToken(session, telegramId);
             setTokenCookie(response, token, authService.getExpireMinutes());
             return LoginResponseDto.builder().success(true).user(session).token(token).authProvider("telegram").build();
@@ -274,11 +287,71 @@ public class BaseAuthController {
 
     @GetMapping("/telegram/{telegramId}")
     public ResponseEntity<Map<String, Object>> getUserByTelegramId(@PathVariable Long telegramId) {
-        String tgUsername = "tg_" + telegramId;
-        return userRepository.findByUsername(tgUsername)
+        return userRepository.findByTelegramId(telegramId)
                 .map(u -> ResponseEntity.ok(Map.<String, Object>of(
                         "success", true, "id", u.getId(), "username", u.getUsername())))
+                .or(() -> userRepository.findByUsername("tg_" + telegramId)
+                        .map(u -> ResponseEntity.ok(Map.<String, Object>of(
+                                "success", true, "id", u.getId(), "username", u.getUsername()))))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/link-telegram")
+    public ResponseEntity<Map<String, Object>> linkTelegram(@RequestBody TelegramAuthRequestDto req) {
+        String currentUsername = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+
+        Optional<User> currentUserOpt = userRepository.findByUsername(currentUsername);
+        if (currentUserOpt.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+
+        User currentUser = currentUserOpt.get();
+        Long telegramId = req.getTelegramId();
+
+        if (telegramId == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Missing telegramId"));
+        }
+
+        // Check if this telegramId is already linked to another user
+        Optional<User> alreadyLinkedOpt = userRepository.findByTelegramId(telegramId);
+        if (alreadyLinkedOpt.isPresent() && !alreadyLinkedOpt.get().getId().equals(currentUser.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Telegram account is already linked to another user"));
+        }
+
+        // Merge data from temporary tg_{telegramId} user if it exists
+        String tempUsername = "tg_" + telegramId;
+        Optional<User> tempUserOpt = userRepository.findByUsername(tempUsername);
+        if (tempUserOpt.isPresent() && !tempUserOpt.get().getId().equals(currentUser.getId())) {
+            User tempUser = tempUserOpt.get();
+
+            // Merge balance
+            if (tempUser.getBalance() != null && tempUser.getBalance().compareTo(BigDecimal.ZERO) > 0) {
+                if (currentUser.getBalance() == null) {
+                    currentUser.setBalance(tempUser.getBalance());
+                } else {
+                    currentUser.setBalance(currentUser.getBalance().add(tempUser.getBalance()));
+                }
+            }
+
+            // Merge virtual wallet settings / copy subscriptions if necessary
+            if (tempUser.isCustomSubscriptionEnabled()) {
+                currentUser.setCustomSubscriptionEnabled(true);
+                currentUser.setCustomSubscriptionMinProfit(tempUser.getCustomSubscriptionMinProfit());
+                currentUser.setCustomSubscriptionSports(tempUser.getCustomSubscriptionSports());
+                currentUser.setCustomSubscriptionOutcomes(tempUser.getCustomSubscriptionOutcomes());
+                currentUser.setCustomSubscriptionBookmakers(tempUser.getCustomSubscriptionBookmakers());
+            }
+
+            // Delete temp user so we don't have a duplicated account
+            userRepository.delete(tempUser);
+            log.info("Merged temporary Telegram user {} into standard user {}", tempUsername, currentUsername);
+        }
+
+        currentUser.setTelegramId(telegramId);
+        userRepository.save(currentUser);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Telegram account linked successfully"));
     }
 
     // =========================================================================

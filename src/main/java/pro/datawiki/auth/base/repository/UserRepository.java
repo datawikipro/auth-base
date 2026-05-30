@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     boolean existsByUsername(String username);
+    Optional<User> findByTelegramId(Long telegramId);
+    boolean existsByTelegramId(Long telegramId);
 
     @Query("SELECT COUNT(u) FROM User u")
     long countAll();

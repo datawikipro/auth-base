@@ -35,6 +35,9 @@ public class User {
     @Column(name = "password_hash", nullable = false, columnDefinition = "TEXT")
     private String passwordHash;
 
+    @Column(name = "telegram_id", unique = true)
+    private Long telegramId;
+
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
