@@ -16,6 +16,10 @@ import pro.datawiki.auth.base.security.JwtTokenProvider;
 import pro.datawiki.auth.base.service.AuthService;
 import pro.datawiki.auth.base.service.UserService;
 import pro.datawiki.auth.base.service.SubscriptionService;
+import pro.datawiki.auth.base.repository.ReferralRelationRepository;
+import pro.datawiki.auth.base.repository.PartnerTransactionRepository;
+import pro.datawiki.auth.base.domain.ReferralRelation;
+import pro.datawiki.auth.base.domain.PartnerTransaction;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -40,6 +44,8 @@ public class BaseAuthController {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final SubscriptionService subscriptionService;
+    private final ReferralRelationRepository referralRelationRepository;
+    private final PartnerTransactionRepository partnerTransactionRepository;
 
     @Value("${telegram.bot-token:}")
     private String botToken;
@@ -172,6 +178,26 @@ public class BaseAuthController {
                     "Guest user with read access", true, false);
             User user = userService.createUser(req.getUsername(), req.getPassword(), req.getEmail(), req.getFullName());
             userService.assignRoles(user.getId(), List.of(guestRole.getId()));
+
+            // Handle referral tracking
+            if (req.getReferralCode() != null && !req.getReferralCode().isBlank()) {
+                userRepository.findByUsername(req.getReferralCode()).ifPresent(referrer -> {
+                    ReferralRelation relation = new ReferralRelation();
+                    relation.setReferralId(user.getId());
+                    relation.setReferrerId(referrer.getId());
+                    
+                    // Level 2 relation: check if referrer themselves has a referrer
+                    referralRelationRepository.findByReferralId(referrer.getId()).ifPresent(parentRel -> {
+                        relation.setParentReferrerId(parentRel.getReferrerId());
+                    });
+                    
+                    referralRelationRepository.save(relation);
+                    log.info("Saved referral relation: user={} referred by={} parent={}", 
+                            user.getUsername(), referrer.getUsername(), 
+                            relation.getParentReferrerId() != null ? relation.getParentReferrerId() : "none");
+                });
+            }
+
             return OperationResponseDto.ok();
         } catch (Exception e) {
             log.error("register error", e);
@@ -352,6 +378,75 @@ public class BaseAuthController {
         userRepository.save(currentUser);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Telegram account linked successfully"));
+    }
+
+    @GetMapping("/referral/stats")
+    public ResponseEntity<Map<String, Object>> getReferralStats() {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username).map(user -> {
+            List<ReferralRelation> l1Relations = referralRelationRepository.findAllByReferrerId(user.getId());
+            List<ReferralRelation> l2Relations = referralRelationRepository.findAllByParentReferrerId(user.getId());
+            
+            // Get referred users details
+            List<Map<String, Object>> recentRegistrations = new ArrayList<>();
+            for (ReferralRelation r : l1Relations) {
+                userRepository.findById(r.getReferralId()).ifPresent(u -> {
+                    recentRegistrations.add(Map.of(
+                            "username", u.getUsername(),
+                            "createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : LocalDateTime.now().toString(),
+                            "level", 1
+                    ));
+                });
+            }
+            for (ReferralRelation r : l2Relations) {
+                userRepository.findById(r.getReferralId()).ifPresent(u -> {
+                    recentRegistrations.add(Map.of(
+                            "username", u.getUsername(),
+                            "createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : LocalDateTime.now().toString(),
+                            "level", 2
+                    ));
+                });
+            }
+            
+            // Sort recent registrations by date descending
+            recentRegistrations.sort((a, b) -> ((String) b.get("createdAt")).compareTo((String) a.get("createdAt")));
+            
+            List<PartnerTransaction> txs = partnerTransactionRepository.findAllByPartnerId(user.getId());
+            List<Map<String, Object>> recentTransactions = new ArrayList<>();
+            BigDecimal totalL1Earnings = BigDecimal.ZERO;
+            BigDecimal totalL2Earnings = BigDecimal.ZERO;
+            
+            for (PartnerTransaction t : txs) {
+                String buyerName = userRepository.findById(t.getBuyerId()).map(User::getUsername).orElse("unknown");
+                recentTransactions.add(Map.of(
+                        "buyerUsername", buyerName,
+                        "paymentAmount", t.getPaymentAmount(),
+                        "commissionAmount", t.getCommissionAmount(),
+                        "currency", t.getCurrency(),
+                        "level", t.getLevel(),
+                        "createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : LocalDateTime.now().toString()
+                ));
+                if (t.getLevel() == 1) {
+                    totalL1Earnings = totalL1Earnings.add(t.getCommissionAmount());
+                } else if (t.getLevel() == 2) {
+                    totalL2Earnings = totalL2Earnings.add(t.getCommissionAmount());
+                }
+            }
+            
+            // Sort recent transactions by date descending
+            recentTransactions.sort((a, b) -> ((String) b.get("createdAt")).compareTo((String) a.get("createdAt")));
+            
+            return ResponseEntity.ok(Map.<String, Object>of(
+                    "referralLink", "https://smartbet.guru/?ref=" + user.getUsername(),
+                    "level1Count", l1Relations.size(),
+                    "level2Count", l2Relations.size(),
+                    "level1Earnings", totalL1Earnings,
+                    "level2Earnings", totalL2Earnings,
+                    "totalEarnings", totalL1Earnings.add(totalL2Earnings),
+                    "recentRegistrations", recentRegistrations.stream().limit(10).toList(),
+                    "recentTransactions", recentTransactions.stream().limit(10).toList()
+            ));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // =========================================================================

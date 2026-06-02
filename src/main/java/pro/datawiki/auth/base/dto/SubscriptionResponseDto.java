@@ -32,6 +32,18 @@ public class SubscriptionResponseDto {
     @JsonProperty("is_active")
     private boolean isActive;
 
+    @JsonProperty("is_frozen")
+    private boolean isFrozen;
+
+    @JsonProperty("freeze_count")
+    private Integer freezeCount;
+
+    @JsonProperty("accumulated_freeze_days")
+    private Integer accumulatedFreezeDays;
+
+    @JsonProperty("remaining_seconds")
+    private Long remainingSeconds;
+
     @JsonProperty("created_at")
     private String createdAt;
 }

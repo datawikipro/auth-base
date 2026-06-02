@@ -22,4 +22,7 @@ public class RegisterRequestDto {
 
     @JsonProperty("fullName")
     private String fullName;
+
+    @JsonProperty("referralCode")
+    private String referralCode;
 }

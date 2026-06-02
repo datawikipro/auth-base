@@ -21,4 +21,10 @@ public class GrantSubscriptionRequestDto {
 
     @JsonProperty("duration_days")
     private Integer durationDays;
+
+    @JsonProperty("price")
+    private Double price;
+
+    @JsonProperty("priceCurrency")
+    private String priceCurrency;
 }

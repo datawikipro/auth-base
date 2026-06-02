@@ -61,6 +61,40 @@ public class BaseSubscriptionController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/freeze")
+    public ResponseEntity<?> freeze(@RequestBody Map<String, String> req) {
+        String feature = req.get("feature");
+        if (feature == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Missing feature parameter"));
+        }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username).map(user -> {
+            try {
+                SubscriptionResponseDto dto = subscriptionService.freezeSubscription(user.getId(), feature);
+                return ResponseEntity.ok(dto);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+            }
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/unfreeze")
+    public ResponseEntity<?> unfreeze(@RequestBody Map<String, String> req) {
+        String feature = req.get("feature");
+        if (feature == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Missing feature parameter"));
+        }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username).map(user -> {
+            try {
+                SubscriptionResponseDto dto = subscriptionService.unfreezeSubscription(user.getId(), feature);
+                return ResponseEntity.ok(dto);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+            }
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     /**
      * Internal bot endpoint: grant subscription using Telegram user_id (internal API key required).
      */
