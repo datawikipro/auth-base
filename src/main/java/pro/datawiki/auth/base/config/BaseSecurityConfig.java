@@ -17,6 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import pro.datawiki.auth.base.security.JwtAuthFilter;
+import pro.datawiki.auth.base.security.ApiKeyAuthFilter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.List;
 public class BaseSecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final ApiKeyAuthFilter apiKeyAuthFilter;
 
     @Value("${cors.origins:http://localhost:5173,http://localhost:3000}")
     private String corsOrigins;
@@ -65,6 +67,7 @@ public class BaseSecurityConfig {
                 // Authenticated
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(apiKeyAuthFilter, JwtAuthFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

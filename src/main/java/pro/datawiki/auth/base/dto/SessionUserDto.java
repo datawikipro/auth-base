@@ -98,4 +98,7 @@ public class SessionUserDto {
 
     @JsonProperty("customSubscriptionBookmakers")
     private String customSubscriptionBookmakers;
+
+    @JsonProperty("apiKey")
+    private String apiKey;
 }

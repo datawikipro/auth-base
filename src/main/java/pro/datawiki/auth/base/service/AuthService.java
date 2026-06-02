@@ -82,6 +82,7 @@ public class AuthService {
                 .customSubscriptionSports(user.getCustomSubscriptionSports())
                 .customSubscriptionOutcomes(user.getCustomSubscriptionOutcomes())
                 .customSubscriptionBookmakers(user.getCustomSubscriptionBookmakers())
+                .apiKey(user.getApiKey())
                 .build();
     }
 

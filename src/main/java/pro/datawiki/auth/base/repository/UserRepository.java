@@ -13,6 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     Optional<User> findByTelegramId(Long telegramId);
     boolean existsByTelegramId(Long telegramId);
+    Optional<User> findByApiKey(String apiKey);
 
     @Query("SELECT COUNT(u) FROM User u")
     long countAll();

@@ -132,6 +132,19 @@ public class BaseAuthController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/generate-api-key")
+    public ResponseEntity<Map<String, Object>> generateApiKey() {
+        String username = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username).map(user -> {
+            String newKey = java.util.UUID.randomUUID().toString().replace("-", "") +
+                            java.util.UUID.randomUUID().toString().replace("-", "");
+            user.setApiKey(newKey);
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.<String, Object>of("success", true, "apiKey", newKey));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/verify-token")
     public Map<String, Object> verifyToken(@RequestParam String token) {
         Claims claims = jwtTokenProvider.parseToken(token);

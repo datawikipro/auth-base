@@ -77,6 +77,9 @@ public class User {
     @Column(name = "custom_subscription_bookmakers", columnDefinition = "TEXT")
     private String customSubscriptionBookmakers;
 
+    @Column(name = "api_key", unique = true, length = 64)
+    private String apiKey;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
