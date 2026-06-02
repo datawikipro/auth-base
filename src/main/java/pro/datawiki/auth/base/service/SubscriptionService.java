@@ -27,9 +27,17 @@ import pro.datawiki.auth.base.domain.User;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final ReferralRelationRepository referralRelationRepository;
+    private final PartnerTransactionRepository partnerTransactionRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public SubscriptionResponseDto grant(Long userId, String feature, Integer durationDays) {
+        return grant(userId, feature, durationDays, null, "RUB");
+    }
+
+    @Transactional
+    public SubscriptionResponseDto grant(Long userId, String feature, Integer durationDays, BigDecimal price, String currency) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiresAt = durationDays != null ? now.plusDays(durationDays) : null;
 
@@ -43,8 +51,52 @@ public class SubscriptionService {
         sub.setStartsAt(now);
         sub.setExpiresAt(expiresAt);
         sub.setActive(true);
+        sub.setFrozen(false);
+        sub.setFreezeStartedAt(null);
+        sub.setRemainingSeconds(null);
 
-        return toDto(subscriptionRepository.save(sub));
+        UserSubscription saved = subscriptionRepository.save(sub);
+
+        // Process referral commissions
+        if (price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+            referralRelationRepository.findByReferralId(userId).ifPresent(relation -> {
+                // Level 1: 20%
+                BigDecimal commissionL1 = price.multiply(new BigDecimal("0.20"));
+                userRepository.findById(relation.getReferrerId()).ifPresent(referrer -> {
+                    referrer.setBalance(referrer.getBalance().add(commissionL1));
+                    userRepository.save(referrer);
+
+                    partnerTransactionRepository.save(PartnerTransaction.builder()
+                            .partnerId(referrer.getId())
+                            .buyerId(userId)
+                            .paymentAmount(price)
+                            .commissionAmount(commissionL1)
+                            .currency(currency != null ? currency : "RUB")
+                            .level(1)
+                            .build());
+                });
+
+                // Level 2: 5%
+                if (relation.getParentReferrerId() != null) {
+                    BigDecimal commissionL2 = price.multiply(new BigDecimal("0.05"));
+                    userRepository.findById(relation.getParentReferrerId()).ifPresent(parentReferrer -> {
+                        parentReferrer.setBalance(parentReferrer.getBalance().add(commissionL2));
+                        userRepository.save(parentReferrer);
+
+                        partnerTransactionRepository.save(PartnerTransaction.builder()
+                                .partnerId(parentReferrer.getId())
+                                .buyerId(userId)
+                                .paymentAmount(price)
+                                .commissionAmount(commissionL2)
+                                .currency(currency != null ? currency : "RUB")
+                                .level(2)
+                                .build());
+                    });
+                }
+            });
+        }
+
+        return toDto(saved);
     }
 
     @Transactional(readOnly = true)

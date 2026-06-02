@@ -31,8 +31,9 @@ public class BaseSubscriptionController {
     @PostMapping("/grant")
     public ResponseEntity<SubscriptionResponseDto> grant(@RequestBody GrantSubscriptionRequestDto req) {
         // Caller must be ADMIN (enforced by SecurityConfig)
+        java.math.BigDecimal priceVal = req.getPrice() != null ? java.math.BigDecimal.valueOf(req.getPrice()) : null;
         return ResponseEntity.ok(
-                subscriptionService.grant(req.getUserId(), req.getFeature(), req.getDurationDays()));
+                subscriptionService.grant(req.getUserId(), req.getFeature(), req.getDurationDays(), priceVal, req.getPriceCurrency()));
     }
 
     @GetMapping("/my")
@@ -105,7 +106,8 @@ public class BaseSubscriptionController {
         if (!internalApiKey.equals(apiKey)) {
             return ResponseEntity.status(403).build();
         }
+        java.math.BigDecimal priceVal = req.getPrice() != null ? java.math.BigDecimal.valueOf(req.getPrice()) : null;
         return ResponseEntity.ok(
-                subscriptionService.grant(req.getUserId(), req.getFeature(), req.getDurationDays()));
+                subscriptionService.grant(req.getUserId(), req.getFeature(), req.getDurationDays(), priceVal, req.getPriceCurrency()));
     }
 }
