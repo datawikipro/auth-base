@@ -67,7 +67,7 @@ public class BaseSecurityConfig {
                 // Authenticated
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(apiKeyAuthFilter, JwtAuthFilter.class)
+            .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
